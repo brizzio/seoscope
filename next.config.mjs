@@ -1,6 +1,8 @@
+import path from "node:path";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const emptyLoader = require.resolve("next/dist/build/webpack/loaders/empty-loader");
+const emptyStub = path.resolve("lib/empty.js");
 
 const nextConfig = {
   webpack: (config) => {
@@ -15,10 +17,10 @@ const nextConfig = {
     // Ensure recorder bundle is not parsed
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
-      "playwright-core/lib/vite/recorder": emptyLoader,
-      "playwright-core/lib/vite/recorder/index.html": emptyLoader,
-      "playwright-core/lib/vite/recorder/assets": emptyLoader,
-      "playwright-core/lib/server/recorder": emptyLoader,
+      "playwright-core/lib/vite/recorder": emptyStub,
+      "playwright-core/lib/vite/recorder/index.html": emptyStub,
+      "playwright-core/lib/vite/recorder/assets": emptyStub,
+      "playwright-core/lib/server/recorder": emptyStub,
     };
 
     config.module.rules.unshift({
