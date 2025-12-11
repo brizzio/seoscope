@@ -1,3 +1,7 @@
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   webpack: (config) => {
@@ -5,18 +9,20 @@ const nextConfig = {
     config.resolve.fallback = {
       ...(config.resolve.fallback || {}),
       electron: false,
+      bufferutil: false,
+      "utf-8-validate": false,
     };
-    config.externals = config.externals || [];
-    config.externals.push("playwright-core", "@sparticuz/chromium");
-
-    config.module.rules.push({
-      test: /playwright-core[\\/]lib[\\/]vite[\\/]recorder[\\/].*\\.(html|ttf|woff2?)$/,
-      type: "asset/source",
-    });
-
-    config.module.rules.push({
-      test: /\.ttf$/i,
-      type: "asset/resource",
+    const empty = require.resolve("next/dist/build/webpack/loaders/empty-loader");
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      "playwright-core/lib/server/recorder/recorderApp": empty,
+      "playwright-core/lib/server/recorder/recorderApp.js": empty,
+      "playwright-core/lib/vite/recorder": empty,
+      "playwright-core/lib/vite/recorder/index.html": empty,
+    };
+    config.module.rules.unshift({
+      test: /playwright-core[\\/]lib[\\/]vite[\\/]recorder[\\/].*/,
+      use: empty,
     });
     return config;
   },
