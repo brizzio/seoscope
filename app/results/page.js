@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -75,7 +76,23 @@ function Scores({ score }) {
   );
 }
 
+function LoadingResults() {
+  return (
+    <div className="relative min-h-screen bg-slate-950 text-white selection:bg-primary-500/60 flex items-center justify-center">
+      <p className="text-white/70">Carregando resultados...</p>
+    </div>
+  );
+}
+
 export default function ResultsPage() {
+  return (
+    <Suspense fallback={<LoadingResults />}>
+      <ResultsInner />
+    </Suspense>
+  );
+}
+
+function ResultsInner() {
   const params = useSearchParams();
   const [status, setStatus] = useState("Preparando auditoria...");
   const [result, setResult] = useState(null);
