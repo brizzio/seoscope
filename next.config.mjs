@@ -1,5 +1,7 @@
-import path from "node:path";
-/** @type {import('next').NextConfig} */
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const emptyLoader = require.resolve("next/dist/build/webpack/loaders/empty-loader");
+
 const nextConfig = {
   webpack: (config) => {
     config.resolve = config.resolve || {};
@@ -10,19 +12,17 @@ const nextConfig = {
       "utf-8-validate": false,
     };
 
-    const empty = path.resolve("lib/empty.js");
-    const nullLoader = path.resolve("loaders/null-loader.cjs");
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
-      "playwright-core/lib/server/recorder/recorderApp": empty,
-      "playwright-core/lib/server/recorder/recorderApp.js": empty,
-      "playwright-core/lib/vite/recorder": empty,
-      "playwright-core/lib/vite/recorder/index.html": empty,
+      "playwright-core/lib/vite/recorder": emptyLoader,
+      "playwright-core/lib/vite/recorder/index.html": emptyLoader,
+      "playwright-core/lib/vite/recorder/assets": emptyLoader,
+      "playwright-core/lib/server/recorder": emptyLoader,
     };
 
     config.module.rules.unshift({
       test: /playwright-core[\\/]lib[\\/]vite[\\/]recorder[\\/].*/,
-      use: [{ loader: nullLoader }],
+      use: [{ loader: emptyLoader }],
     });
 
     return config;
