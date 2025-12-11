@@ -14,7 +14,7 @@ const nextConfig = {
 
     // Keep heavy binaries external; they will be loaded from node_modules at runtime.
     config.externals = config.externals || [];
-    config.externals.push("playwright-core", "@sparticuz/chromium", "chromium-bidi");
+    config.externals.push("playwright", "@sparticuz/chromium", "chromium-bidi");
 
     return config;
   },

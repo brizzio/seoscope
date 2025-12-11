@@ -16,7 +16,7 @@
     "axe-core": "^4.9.1",
     "chromium-bidi": "^0.5.22",
     "next": "^14.2.4",
-    "playwright-core": "^1.48.2",
+    "playwright": "^1.48.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -25,7 +25,6 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^9.9.1",
     "eslint-config-next": "^16.0.8",
-    "playwright": "^1.57.0",
     "postcss": "^8.4.45",
     "tailwindcss": "^3.4.11"
   }
