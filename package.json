@@ -1,0 +1,31 @@
+{
+  "name": "seoscope-next",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@sparticuz/chromium": "^119.0.2",
+    "axe-core": "^4.9.1",
+    "chromium-bidi": "^0.5.22",
+    "next": "^14.2.4",
+    "playwright-core": "^1.48.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.5.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^16.0.8",
+    "playwright": "^1.57.0",
+    "postcss": "^8.4.45",
+    "tailwindcss": "^3.4.11"
+  }
+}

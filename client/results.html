@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Site Auditor · Resultados</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                500: '#6366f1',
+                600: '#4f46e5',
+              },
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-white selection:bg-primary-500/60">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.35),transparent_55%)]"></div>
+    <div class="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-b from-cyan-400/20 to-violet-500/10 blur-3xl"></div>
+    <div class="relative z-10 max-w-6xl mx-auto px-4 py-10 lg:py-16 space-y-8">
+      <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-2xl shadow-[0_25px_80px_rgba(15,23,42,0.65)]">
+        <div>
+          <p class="text-sm uppercase tracking-[0.45em] text-white/60">Resultado</p>
+          <h1 class="text-3xl lg:text-4xl font-semibold mt-2" id="results-url">Carregando…</h1>
+          <p class="text-white/60 mt-2 text-sm" id="results-date"></p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+          <a
+            href="/"
+            class="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-white/20 text-white/80 hover:bg-white/10 transition"
+          >
+            ← Nova auditoria
+          </a>
+          <button
+            id="retry-btn"
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-primary-500 to-primary-600 font-semibold shadow-lg shadow-primary-500/30 hover:scale-[1.02] transition"
+          >
+            Reprocessar
+          </button>
+        </div>
+      </header>
+
+      <div
+        id="status-card"
+        class="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(15,23,42,0.6)]"
+      >
+        <p id="status-text" class="text-white/80">Preparando auditoria…</p>
+      </div>
+
+      <section id="results" class="min-w-screen space-y-8 hidden">
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5" id="score-grid"></div>
+
+        <div class="grid gap-6 md:grid-cols-2">
+          <article class="glass-card">
+            <h2 class="card-title">Resumo</h2>
+            <dl id="summary-list" class="definition-grid"></dl>
+          </article>
+          <article class="glass-card">
+            <h2 class="card-title">Performance</h2>
+            <dl id="perf-list" class="definition-grid"></dl>
+          </article>
+          <article class="glass-card md:col-span-2">
+            <h2 class="card-title">SEO</h2>
+            <dl id="seo-list" class="definition-grid"></dl>
+            <div id="broken-list" class="mt-4"></div>
+          </article>
+          <article class="glass-card">
+            <h2 class="card-title">Usabilidade</h2>
+            <dl id="ux-list" class="definition-grid"></dl>
+          </article>
+          <article class="glass-card">
+            <h2 class="card-title">Acessibilidade (axe)</h2>
+            <dl id="a11y-list" class="definition-grid"></dl>
+            <div id="violations" class="mt-4 space-y-3"></div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <template id="score-chip">
+      <div class="rounded-3xl bg-white/10 border border-white/10 backdrop-blur-2xl p-6 flex flex-col gap-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]">
+        <p class="text-sm uppercase tracking-[0.4em] text-white/60"></p>
+        <strong class="text-4xl font-semibold"></strong>
+        <span class="text-white/60 text-sm">pontos</span>
+      </div>
+    </template>
+
+    <script>
+      const statusCard = document.getElementById('status-card');
+      const statusText = document.getElementById('status-text');
+      const resultsSection = document.getElementById('results');
+      const urlEl = document.getElementById('results-url');
+      const dateEl = document.getElementById('results-date');
+      const scoreGrid = document.getElementById('score-grid');
+      const summaryList = document.getElementById('summary-list');
+      const perfList = document.getElementById('perf-list');
+      const seoList = document.getElementById('seo-list');
+      const uxList = document.getElementById('ux-list');
+      const a11yList = document.getElementById('a11y-list');
+      const brokenList = document.getElementById('broken-list');
+      const violationsBox = document.getElementById('violations');
+      const retryBtn = document.getElementById('retry-btn');
+
+      const params = new URLSearchParams(window.location.search);
+      const rawTargetUrl = params.get('url');
+      const targetUrl = normalizeUrl(rawTargetUrl);
+      const timeout = parseNumber(params.get('timeout'));
+      const maxLinks = parseNumber(params.get('maxLinks'));
+
+      if (!targetUrl) {
+        statusText.textContent = 'Nenhum domínio fornecido. Volte e inicie uma nova auditoria.';
+        retryBtn.disabled = true;
+      } else {
+        runAudit();
+      }
+
+      retryBtn.addEventListener('click', () => {
+        runAudit();
+      });
+
+      async function runAudit() {
+        statusText.textContent = 'Executando auditoria… isso pode levar alguns segundos.';
+        retryBtn.disabled = true;
+        resultsSection.classList.add('hidden');
+
+        const payload = { url: targetUrl };
+        if (timeout) payload.timeout = timeout;
+        if (maxLinks) payload.maxLinks = maxLinks;
+
+        try {
+          const response = await fetch('/audit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data?.error || data?.message || 'Erro na auditoria');
+
+          hydrateResults(data);
+          statusCard.classList.add('hidden');
+          resultsSection.classList.remove('hidden');
+        } catch (error) {
+          console.error(error);
+          statusText.textContent = error?.message || 'Erro inesperado. Tente novamente.';
+          statusCard.classList.remove('hidden');
+        } finally {
+          retryBtn.disabled = false;
+        }
+      }
+
+      function hydrateResults(data) {
+        urlEl.textContent = rawTargetUrl || data.url;
+        dateEl.textContent = new Date(data.fetchedAt).toLocaleString('pt-BR');
+        renderScores(data.score);
+        renderSummary(data.summary);
+        renderPerf(data.perf);
+        renderSeo(data.seo);
+        renderUx(data.ux);
+        renderA11y(data.a11y);
+      }
+
+      function renderScores(scores = {}) {
+        scoreGrid.innerHTML = '';
+        Object.entries(scores).forEach(([label, value]) => {
+          const tpl = document.getElementById('score-chip').content.cloneNode(true);
+          tpl.querySelector('p').textContent = label.toUpperCase();
+          tpl.querySelector('strong').textContent = value ?? 'n/a';
+          scoreGrid.appendChild(tpl);
+        });
+      }
+
+      function renderSummary(summary = {}) {
+        summaryList.innerHTML = entries([
+          ['Performance', summary.performance],
+          ['SEO', summary.seo],
+          ['Acessibilidade', summary.accessibility],
+          ['Usabilidade', summary.usability],
+        ]);
+      }
+
+      function renderPerf(perf = {}) {
+        perfList.innerHTML = entries([
+          ['TTFB', fmtMs(perf.ttfb)],
+          ['FCP', fmtMs(perf.fcp)],
+          ['LCP', fmtMs(perf.lcp)],
+          ['CLS', perf.cls == null ? 'n/a' : perf.cls.toFixed(3)],
+          ['DOMContentLoaded', fmtMs(perf.dcl)],
+          ['Load', fmtMs(perf.load)],
+          ['Requisições', perf.totalRequests ?? 'n/a'],
+          ['Transferência', perf.totalTransferSize ? `${Math.round(perf.totalTransferSize / 1024)} KB` : 'n/a'],
+        ]);
+      }
+
+      function renderSeo(seo = {}) {
+        seoList.innerHTML = entries([
+          ['Title', pill(seo.hasTitle)],
+          ['Meta description', pill(seo.hasMetaDescription)],
+          ['Canonical', seo.canonicalUrl || 'n/a'],
+          ['H1', seo.h1Count ?? 'n/a'],
+          ['lang', seo.langAttr || 'n/a'],
+          ['Viewport', seo.viewportMeta || 'n/a'],
+          ['robots.txt', pill(seo.robotsTxt?.reachable)],
+          ['sitemap.xml', pill(seo.sitemapXml?.reachable)],
+        ]);
+
+        const broken = seo.brokenLinksSample || [];
+        brokenList.innerHTML = broken.length
+          ? `
+            <div class="mt-4">
+              <p class="text-sm uppercase tracking-[0.3em] text-white/50 mb-2">Links quebrados</p>
+              <ul class="space-y-2 text-white/80">
+                ${broken.map((u) => `<li class="text-sm truncate">${u}</li>`).join('')}
+              </ul>
+            </div>
+          `
+          : '<p class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-400/20 text-emerald-200 text-sm">Nenhum link quebrado na amostra</p>';
+      }
+
+      function renderUx(ux = {}) {
+        uxList.innerHTML = entries([
+          ['Navegação', pill(ux.hasNavLandmark)],
+          ['Header + Footer', pill(ux.hasHeaderFooter)],
+          ['Skip link', pill(ux.hasSkipLink)],
+          ['Imagens sem alt', ux.imagesWithoutAlt ?? 'n/a'],
+          ['Links sem texto', ux.linksWithoutText ?? 'n/a'],
+          ['Elementos focáveis', ux.focusableCount ?? 'n/a'],
+        ]);
+      }
+
+      function renderA11y(a11y = {}) {
+        a11yList.innerHTML = entries([
+          ['Violações', a11y.violations?.length ?? 0],
+          ['Incompletas', a11y.incomplete ?? 0],
+        ]);
+
+        const violations = a11y.violations || [];
+        violationsBox.innerHTML = violations.length
+          ? violations
+              .slice(0, 8)
+              .map(
+                (v) =>
+                  `<div class="p-3 rounded-2xl bg-white/10 border border-white/10"><p class="font-semibold">${v.id} <span class="text-xs text-white/60">(${v.impact || 'n/a'})</span></p><p class="text-sm text-white/70">${v.description}</p></div>`
+              )
+              .join('')
+          : '<p class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-400/20 text-emerald-200 text-sm">Sem violações reportadas</p>';
+      }
+
+      function entries(list) {
+        return list
+          .map(
+            ([title, value]) => `
+              <div>
+                <dt class="text-white/50 text-xs uppercase tracking-[0.3em]">${title}</dt>
+                <dd class="text-white text-lg">${value}</dd>
+              </div>
+            `
+          )
+          .join('');
+      }
+
+      function fmtMs(value) {
+        return value == null ? 'n/a' : `${Math.round(value)} ms`;
+      }
+
+      function pill(isOk) {
+        if (typeof isOk === 'string') return isOk;
+        if (isOk) {
+          return '<span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-400/20 text-emerald-200 text-sm">OK</span>';
+        }
+        return '<span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-400/20 text-rose-200 text-sm">Faltando</span>';
+      }
+
+      function parseNumber(value) {
+        if (!value) return null;
+        const num = Number(value);
+        return Number.isFinite(num) ? num : null;
+      }
+
+      function normalizeUrl(raw) {
+        const value = (raw || '').trim();
+        if (!value) return '';
+        if (/^https?:\/\//i.test(value)) return value;
+        if (!value.includes('.')) return '';
+        return `https://${value}`;
+      }
+    </script>
+
+    <style>
+      .glass-card {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 1.5rem;
+        padding: 1.5rem;
+        backdrop-filter: blur(32px);
+        box-shadow: 0 30px 90px rgba(15, 23, 42, 0.6);
+      }
+      .card-title {
+        color: #fff;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+      .definition-grid {
+        display: grid;
+        gap: 1rem;
+      }
+    </style>
+  </body>
+</html>

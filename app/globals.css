@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100vh;
+  background-color: #0f172a;
+  color: #fff;
+}
+
+.glass-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  backdrop-filter: blur(32px);
+  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.6);
+}
+
+.card-title {
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.definition-grid {
+  display: grid;
+  gap: 1rem;
+}
