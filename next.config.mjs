@@ -1,6 +1,7 @@
 import path from "node:path";
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
+const emptyLoader = require.resolve("next/dist/build/webpack/loaders/empty-loader");
 
 const nextConfig = {
   webpack: (config) => {
@@ -12,9 +13,18 @@ const nextConfig = {
       "utf-8-validate": false,
     };
 
-    // Keep heavy binaries external; they will be loaded from node_modules at runtime.
-    config.externals = config.externals || [];
-    config.externals.push("playwright", "@sparticuz/chromium", "chromium-bidi");
+    // Stub Playwright recorder bundle to avoid pulling fonts/html
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      "playwright-core/lib/vite/recorder": emptyLoader,
+      "playwright-core/lib/vite/recorder/index.html": emptyLoader,
+      "playwright-core/lib/vite/recorder/assets": emptyLoader,
+      "playwright-core/lib/server/recorder": emptyLoader,
+    };
+    config.module.rules.unshift({
+      test: /playwright-core[\\/]lib[\\/]vite[\\/]recorder[\\/].*/,
+      use: [{ loader: emptyLoader }],
+    });
 
     return config;
   },

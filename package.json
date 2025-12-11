@@ -8,8 +8,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "playwright install chromium"
+    "lint": "next lint"
   },
   "dependencies": {
     "@sparticuz/chromium": "^119.0.2",
