@@ -12,6 +12,11 @@ const nextConfig = {
       "utf-8-validate": false,
     };
 
+    // Do not bundle heavy Playwright binaries; load them at runtime from node_modules.
+    config.externals = config.externals || [];
+    config.externals.push("playwright-core", "@sparticuz/chromium", "chromium-bidi");
+
+    // Ensure recorder bundle is not parsed
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       "playwright-core/lib/vite/recorder": emptyLoader,
