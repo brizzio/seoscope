@@ -34,7 +34,7 @@ const nextConfig = {
 
     // Keep Playwright/Chromium as externals so their own __dirname logic works at runtime.
     config.externals = config.externals || [];
-    for (const pkg of ["playwright", "playwright-core", "@sparticuz/chromium"]) {
+    for (const pkg of ["playwright", "playwright-core"]) {
       if (!config.externals.includes(pkg)) {
         config.externals.push(pkg);
       }
