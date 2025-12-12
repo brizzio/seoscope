@@ -7,3 +7,6 @@
 
 [build.environment]
 PLAYWRIGHT_BROWSERS_PATH = "node_modules/.cache/ms-playwright"
+
+[functions]
+  included_files = ["node_modules/.cache/ms-playwright/**"]
