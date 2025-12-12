@@ -26,9 +26,8 @@ const nextConfig = {
       use: [{ loader: emptyLoader }],
     });
 
-    // Keep heavy binaries external; they will be loaded from node_modules at runtime.
+    // Do not externalize Playwright/Chromium; bundle them into the function.
     config.externals = config.externals || [];
-    config.externals.push("playwright", "playwright-core", "@sparticuz/chromium", "chromium-bidi");
 
     return config;
   },
