@@ -9,7 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "set PLAYWRIGHT_BROWSERS_PATH=node_modules/.cache/ms-playwright&& npx playwright install chromium"
+    "postinstall": "node scripts/install-playwright.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "^119.0.2",
