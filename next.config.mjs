@@ -26,8 +26,13 @@ const nextConfig = {
       use: [{ loader: emptyLoader }],
     });
 
-    // Do not externalize Playwright/Chromium; bundle them into the function.
+    // Keep Playwright/Chromium as externals so their own __dirname logic works at runtime.
     config.externals = config.externals || [];
+    for (const pkg of ["playwright", "playwright-core", "@sparticuz/chromium"]) {
+      if (!config.externals.includes(pkg)) {
+        config.externals.push(pkg);
+      }
+    }
 
     return config;
   },
