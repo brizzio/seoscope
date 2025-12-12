@@ -5,5 +5,8 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+[[plugins]]
+  package = "netlify-plugin-chromium"
+
 [build.environment]
 PLAYWRIGHT_BROWSERS_PATH = "node_modules/.cache/ms-playwright"
