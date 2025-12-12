@@ -26,6 +26,12 @@ const nextConfig = {
       use: [{ loader: emptyLoader }],
     });
 
+    // Ignore source maps shipped inside chrome-aws-lambda to avoid webpack parse errors.
+    config.module.rules.unshift({
+      test: /chrome-aws-lambda[\\/].*\.map$/,
+      use: [{ loader: emptyLoader }],
+    });
+
     // Keep Playwright/Chromium as externals so their own __dirname logic works at runtime.
     config.externals = config.externals || [];
     for (const pkg of ["playwright", "playwright-core", "@sparticuz/chromium"]) {
